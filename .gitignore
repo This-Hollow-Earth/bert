@@ -165,7 +165,7 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+#   (template rule `/site` removed: BERT's own static site lives in /site)
 
 # mypy
 .mypy_cache/

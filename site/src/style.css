@@ -1,0 +1,70 @@
+/* BERT — wireframe, monochrome. Design tokens shared with WALTER.
+   Background #f5f5f5 "paper", ink #434343 "dark gray 4", no colour anywhere.
+   Logo: black-line PNG recoloured to ink via a CSS mask (see .logo). */
+:root {
+  --paper: #f5f5f5;
+  --ink: #434343; /* dark gray 4 */
+  --ink-soft: rgba(67, 67, 67, 0.55);
+  --line: 1px solid var(--ink);
+  --dash: 1px dashed var(--ink);
+  --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.45; }
+a { color: var(--ink); }
+small { font-weight: normal; color: var(--ink-soft); }
+h1, h2, h3, h4 { font-weight: 600; margin: 0; }
+
+/* logo: black line PNG recoloured to ink via mask, so it follows --ink */
+.logo {
+  display: inline-block; width: 36px; height: 34px; background: var(--ink);
+  -webkit-mask: url("/cube-ink.png") center / contain no-repeat;
+  mask: url("/cube-ink.png") center / contain no-repeat;
+}
+
+/* header / nav / footer */
+.site-header { display: flex; align-items: center; gap: 14px; padding: 18px 28px; border-bottom: var(--line); }
+.site-header .title { display: flex; flex-direction: column; }
+.site-header h1 { font-size: 20px; letter-spacing: 0.01em; }
+.site-header .tagline { font-size: 13px; color: var(--ink-soft); }
+.site-header nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
+.site-header nav a { text-decoration: none; border-bottom: 1px solid transparent; }
+.site-header nav a:hover, .site-header nav a[aria-current] { border-bottom: var(--line); }
+.site-footer { border-top: var(--line); margin-top: 40px; padding: 16px 28px; font-size: 12px; display: flex; gap: 24px; flex-wrap: wrap; color: var(--ink-soft); }
+.site-footer a { color: var(--ink-soft); }
+#app-error:not(:empty) { margin: 16px 28px; padding: 10px; border: 2px dashed var(--ink); font-family: var(--mono); }
+
+/* assessment meta: name + date of the current assessment */
+.assessment-meta { font-family: var(--mono); font-size: 12px; border: var(--line); padding: 2px 8px; }
+
+/* form controls: square, ink-on-paper, invert on hover */
+button, select, input[type="text"] {
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--paper);
+  border: var(--line); border-radius: 0; padding: 4px 8px;
+}
+button { cursor: pointer; }
+button:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+button:disabled { opacity: 0.3; cursor: default; }
+
+/* page shell for questionnaire + results */
+.page { max-width: 760px; margin: 0 auto; padding: 28px; }
+.page h2 { font-size: 22px; margin: 26px 0 10px; }
+.page h3 { font-size: 16px; margin: 20px 0 6px; }
+.page table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.page th, .page td { border: var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+
+/* deliberately-unbuilt v2 sections, and any stub */
+.placeholder { border: 2px dashed var(--ink); padding: 10px 14px; font-size: 13px; color: var(--ink-soft); margin: 14px 0; }
+
+/* monospace tag chip */
+.tag { font-family: var(--mono); font-size: 11px; border: var(--dash); padding: 0 6px; text-transform: uppercase; }
+
+/* print: keep paper/ink exactly as on screen (browser print dialog = PDF) */
+@page { size: A4; margin: 14mm 12mm; }
+@media print {
+  html, body { background: var(--paper); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .no-print { display: none !important; }
+  a { text-decoration: none; }
+}
