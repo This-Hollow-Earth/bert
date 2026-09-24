@@ -1,0 +1,169 @@
+# BERT v1 Module definitions
+#
+# Decided in THI-12 (grilling with Arjen, 2026-09-24).
+# Constraints from THI-73: content is YAML data under a typed schema, validated
+# at build, so adding or rewording a Module is a content edit, not a code change.
+#
+# Fixed list — every respondent answers every Module. There is no skip: staged
+# Modules carry an explicit "we don't have this function" answer so absence is
+# captured as data rather than as a blank (feeds the deferred org-wide
+# enterprise-readiness axis, THI-15).
+#
+# ids are STABLE FOREVER and never reused. A future Module split creates new
+# ids and retires the old one; it does not reuse the parent id. This is what
+# makes dated assessments comparable across editions.
+#
+# Two Module kinds:
+#   staged — placed on the Cons2SaaS curve (1-5) via the 5-option question
+#   binary — a yes/no on whether a dedicated person or team exists. These sit
+#            OUTSIDE the consultancy-to-SaaS tension; they are presence-signals
+#            of a mature organisation, which is why they are not staged.
+#
+# NOTE: the five stage option texts below are THI-11's wording, carried over
+# verbatim and NOT yet neutral-voiced. They are written in the client's voice
+# ("your team is still configuring things manually"), but the v1 site is
+# user-agnostic — it cannot know whether a consultant or the client is
+# answering. The neutral-voice pass is outstanding work on THI-12.
+
+schema_version: 1
+
+groups:
+  - id: commercial
+    name: Commercial
+  - id: delivery
+    name: Delivery
+  - id: product-engineering
+    name: Product & Engineering
+  - id: corporate
+    name: Corporate
+
+# Cons2SaaS stages. Shared across every staged Module in v1 (generic wording;
+# per-Module authored wording is a v2 upgrade, see THI-11).
+stages:
+  - id: A
+    stage: 1
+    name: Consultancy
+    text: >-
+      Every request starts from scratch. Every time someone needs something from
+      this Module, it's handled individually, from the ground up. The work
+      depends heavily on whichever senior person handles it. You can't easily
+      predict how long a request will take or how much it will cost. The same
+      kind of request comes up every few months, solved fresh each time, with
+      nothing carried over from the last one.
+  - id: B
+    stage: 2
+    name: Automated Consultancy
+    text: >-
+      We've built internal tools, but a person still runs them. You've noticed
+      the same requests coming up again and again, so you've built scripts,
+      templates, or internal tools that make handling them faster. But someone
+      still has to run those tools by hand for every request. People are starting
+      to ask if they can just use the tool themselves, or subscribe to it
+      directly, instead of asking a person to run it for them.
+  - id: C
+    stage: 3
+    name: Hybrid
+    text: >-
+      People think they're self-serve, but someone's still behind the curtain. On
+      the surface it looks like people can help themselves. In reality, your team
+      is still configuring things manually for every request, patching exceptions
+      on the fly. Getting set up takes weeks, not minutes. Feedback from
+      different requesters gets stuck between "is this a bug" and "is this a
+      missing feature," with no clear owner. Every additional requester adds real
+      work for your team, not just a checkbox.
+  - id: D
+    stage: 4
+    name: Big Head SaaS
+    text: >-
+      People mostly serve themselves, but the biggest requests still need us.
+      Most people can get what they need from this Module without help; you can
+      reasonably predict how much this will cost and how long it will take. But
+      your largest, highest-stakes requests still need hand-holding, onboarding
+      support, or a dedicated point of contact. Every one-off exception you grant
+      here risks dragging things back toward the previous stage.
+  - id: E
+    stage: 5
+    name: Long Tail SaaS
+    text: >-
+      People serve themselves, at near-zero effort from us. Someone new can get
+      what they need from this Module without ever talking to your team. The cost
+      of serving one more person is close to zero. Your team's time goes toward
+      handling volume, not handling complexity or exceptions.
+
+# Answer offered on every staged Module instead of allowing a skip.
+absent_answer:
+  id: X
+  text: We don't have this function.
+
+# Order is narrative, not ranked: it starts where every firm recognises itself
+# (Service Delivery) and ends with the two binary org-maturity signals.
+# `requester` defaults to the client and is only written where it differs.
+modules:
+  - id: service-delivery
+    name: Service Delivery
+    order: 1
+    group: delivery
+    office: front
+    kind: staged
+
+  - id: onboarding-support
+    name: Onboarding & Support
+    order: 2
+    group: delivery
+    office: front
+    kind: staged
+
+  - id: product
+    name: Product
+    order: 3
+    group: product-engineering
+    office: back
+    kind: staged
+    requester: your delivery and commercial teams
+
+  - id: engineering
+    name: Engineering
+    order: 4
+    group: product-engineering
+    office: back
+    kind: staged
+    requester: your delivery teams and product
+
+  - id: methodology-data
+    name: Methodology & Data
+    order: 5
+    group: product-engineering
+    office: back
+    kind: staged
+    requester: your analysts and delivery teams
+
+  - id: sales-marketing
+    name: Sales & Marketing
+    order: 6
+    group: commercial
+    office: front
+    kind: staged
+
+  - id: finance-contracting
+    name: Finance & Contracting
+    order: 7
+    group: corporate
+    office: back
+    kind: staged
+    requester: your commercial and delivery teams
+
+  - id: legal-compliance
+    name: Legal & Compliance
+    order: 8
+    group: corporate
+    office: back
+    kind: binary
+    question: Do you have a dedicated person or team for legal and compliance?
+
+  - id: people-hr
+    name: People & HR
+    order: 9
+    group: corporate
+    office: back
+    kind: binary
+    question: Do you have a dedicated person or team for people and HR?

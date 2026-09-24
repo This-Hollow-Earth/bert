@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node / the BERT static site (site/)
+node_modules/
+site/dist/
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store
