@@ -5,54 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BERT — Enterprise Readiness</title>
     <link rel="icon" type="image/png" href="/cube.png" />
-    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <header class="site-header">
-      <span class="logo" role="img" aria-label="This Hollow Earth cube logo"></span>
-      <div class="title">
-        <h1>BERT</h1>
-        <span class="tagline">Where each part of your organisation sits, and what's next.</span>
-      </div>
-      <nav>
-        <a href="#" aria-current="page">Assess</a>
-        <a href="#">Method</a>
-      </nav>
-      <span class="assessment-meta">no assessment</span>
-    </header>
-
-    <main class="page">
-      <h2>Design tokens</h2>
-      <p>
-        Wireframe, monochrome — the same tokens as WALTER. Background
-        <span class="tag">#f5f5f5</span> paper, ink <span class="tag">#434343</span>.
-        No colour anywhere: state is carried by shape, border and position.
-      </p>
-
-      <table>
-        <tr><th>Token</th><th>Value</th><th>Use</th></tr>
-        <tr><td>--paper</td><td>#f5f5f5</td><td>background</td></tr>
-        <tr><td>--ink</td><td>#434343</td><td>all text and lines</td></tr>
-        <tr><td>--ink-soft</td><td>rgba(67,67,67,.55)</td><td>secondary text</td></tr>
-        <tr><td>--line / --dash</td><td>1px solid / dashed ink</td><td>every border</td></tr>
-      </table>
-
-      <h3>Controls</h3>
-      <p>
-        <button>Start assessment</button>
-        <button disabled>Download result</button>
-        <select><option>Engineering</option><option>Sales</option></select>
-      </p>
-
-      <div class="placeholder">
-        Deferred to v2: the full graded checklist across the three Principles —
-        Tested, Documented, Automated.
-      </div>
-    </main>
-
-    <footer class="site-footer">
-      <span>BERT — by This Hollow Earth</span>
-      <a href="#">Method</a>
-    </footer>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
