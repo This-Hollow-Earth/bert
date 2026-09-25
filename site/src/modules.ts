@@ -20,19 +20,34 @@ export interface Group {
   name: string;
 }
 
-/** A Cons2SaaS stage option, shared across every staged Module in v1. */
+/** A Cons2SaaS stage option. */
 export interface Stage {
   id: string; // A-E
   stage: 1 | 2 | 3 | 4 | 5;
   name: string;
-  /** May contain the `{requester}` placeholder, filled per Module at render. */
-  text: string;
+  /**
+   * GENERAL symptoms — true at this stage in any Module. Rendered after the
+   * Module's own symptoms, visually secondary, so the five options stay
+   * comparable across departments.
+   */
+  symptoms: string[];
   /**
    * Only on the top stage, which has no next rung. THI-74: the results page
    * says what HOLDING this stage requires rather than inventing a stage 6.
    */
   holding?: string;
 }
+
+/** One Module's authored copy for one stage. */
+export interface ModuleStage {
+  /** ONE sentence naming this stage for this Module. */
+  defining: string;
+  /** Concrete, Module-specific observations. Capped at MAX_MODULE_SYMPTOMS. */
+  symptoms: string[];
+}
+
+/** Bullets shown for a Module at a stage: its own, then the general ones. */
+export const MAX_MODULE_SYMPTOMS = 3;
 
 interface ModuleBase {
   /** Stable forever, never reused. A split creates new ids and retires the old one. */
@@ -43,11 +58,13 @@ interface ModuleBase {
   office: Office;
 }
 
-/** Placed on the Cons2SaaS curve via the shared 5-option question. */
+/** Placed on the Cons2SaaS curve via the 5-option question. */
 export interface StagedModule extends ModuleBase {
   kind: "staged";
-  /** Who asks this Module for things. Defaults to the client when omitted. */
+  /** Who asks this Module for things. Defaults to DEFAULT_REQUESTER. */
   requester?: string;
+  /** Authored copy for all five stages, keyed by stage id (A-E). */
+  stages: Record<string, ModuleStage>;
 }
 
 /**
@@ -81,38 +98,31 @@ export function requesterFor(m: Module): string | null {
   return m.kind === "staged" ? (m.requester ?? DEFAULT_REQUESTER) : null;
 }
 
-/** Placeholder in stage text, replaced with the Module's requester. */
-export const REQUESTER_TOKEN = "{requester}";
+/** Placeholder-free since schema v2: copy is authored per Module. */
+
+/** This Module's authored copy for a stage. */
+export function moduleStage(m: Module, stage: Stage): ModuleStage | null {
+  return m.kind === "staged" ? (m.stages[stage.id] ?? null) : null;
+}
+
+/** The one sentence naming this stage for this Module. */
+export function definingFor(m: Module, stage: Stage): string | null {
+  return moduleStage(m, stage)?.defining ?? null;
+}
 
 /**
- * Fills `{requester}` in a stage's text for a given Module.
- *
- * Requester values are lowercase noun phrases ("clients", "the delivery
- * teams"), but the placeholder can land at a sentence start, so each
- * occurrence is capitalised when it follows a sentence boundary — otherwise
- * the copy reads "...for every request. clients are starting to ask".
- * Binary Modules have no requester and never render stage text.
+ * Bullets for a Module at a stage: the Module's own concrete symptoms first,
+ * then the stage's general ones. Callers that need to style the general ones
+ * differently can use `generalFrom` to find the boundary.
  */
-export function stageTextFor(stage: Stage, m: Module): string {
-  const who = requesterFor(m);
-  if (who === null) return stage.text;
+export function symptomsFor(m: Module, stage: Stage): string[] {
+  const own = moduleStage(m, stage)?.symptoms ?? [];
+  return [...own, ...stage.symptoms];
+}
 
-  const capitalised = who.charAt(0).toUpperCase() + who.slice(1);
-  let out = "";
-  let rest = stage.text;
-  for (;;) {
-    const i = rest.indexOf(REQUESTER_TOKEN);
-    if (i === -1) {
-      out += rest;
-      break;
-    }
-    const before = out + rest.slice(0, i);
-    // sentence start = start of text, or after . ! ? followed by whitespace
-    const atSentenceStart = /(^|[.!?]["')\]]?\s+)$/.test(before);
-    out = before + (atSentenceStart ? capitalised : who);
-    rest = rest.slice(i + REQUESTER_TOKEN.length);
-  }
-  return out;
+/** Index in symptomsFor() where the general, stage-level symptoms begin. */
+export function generalFrom(m: Module, stage: Stage): number {
+  return moduleStage(m, stage)?.symptoms.length ?? 0;
 }
 
 /** Front/back office is an independent axis, NOT derived from group: marketing
@@ -130,8 +140,8 @@ const ID_RE = /^[a-z][a-z0-9-]*$/;
 export function validateModules(data: ModuleData): ModuleData {
   const errors: string[] = [];
 
-  if (data.schema_version !== 1) {
-    errors.push(`schema_version must be 1, got ${data.schema_version}`);
+  if (data.schema_version !== 2) {
+    errors.push(`schema_version must be 2, got ${data.schema_version}`);
   }
 
   const groupIds = new Set(data.groups?.map((g) => g.id) ?? []);
@@ -228,23 +238,89 @@ export function validateModules(data: ModuleData): ModuleData {
     }
   }
 
+  // Schema v2: every staged Module authors all five stages. A missing entry
+  // would render a blank option, so this is a hard error rather than a fallback.
+  const stageIds = (data.stages ?? []).map((s) => s.id);
+  for (const m of data.modules) {
+    if (m.kind !== "staged") continue;
+    const authored = m.stages ?? {};
+
+    for (const sid of stageIds) {
+      const ms = authored[sid];
+      const where = `module "${m.id}" stage "${sid}"`;
+      if (!ms) {
+        errors.push(`${where}: missing — every staged module must author all 5 stages`);
+        continue;
+      }
+      if (!ms.defining?.trim()) {
+        errors.push(`${where}: "defining" is required — one sentence naming the stage`);
+      } else {
+        // One sentence: the point is a scannable line, not a paragraph.
+        const sentences = ms.defining.trim().split(/[.!?]+\s+/).filter(Boolean).length;
+        if (sentences > 1) {
+          errors.push(`${where}: "defining" must be ONE sentence, found ${sentences}`);
+        }
+        if (!/[.!?]$/.test(ms.defining.trim())) {
+          errors.push(`${where}: "defining" must end with punctuation`);
+        }
+      }
+      if (!Array.isArray(ms.symptoms) || ms.symptoms.length === 0) {
+        errors.push(`${where}: at least one symptom is required`);
+      } else if (ms.symptoms.length > MAX_MODULE_SYMPTOMS) {
+        errors.push(
+          `${where}: ${ms.symptoms.length} symptoms exceeds the cap of ${MAX_MODULE_SYMPTOMS} — ` +
+            `more than that stops being scannable and breaks the 5-minute budget`,
+        );
+      }
+      for (const sym of ms.symptoms ?? []) {
+        // Bullets, not prose: no trailing full stop, and no multi-sentence text.
+        if (/[.]$/.test(sym.trim())) {
+          errors.push(`${where}: symptom "${sym.slice(0, 40)}…" must not end with a full stop`);
+        }
+      }
+    }
+
+    // Catch copy authored against a stage id that doesn't exist (typo'd key).
+    for (const sid of Object.keys(authored)) {
+      if (!stageIds.includes(sid)) {
+        errors.push(`module "${m.id}": unknown stage id "${sid}" in stages`);
+      }
+    }
+  }
+
+  // Every stage needs at least one general symptom: they are what keeps the
+  // five options comparable across Modules.
+  for (const s of data.stages ?? []) {
+    if (!Array.isArray(s.symptoms) || s.symptoms.length === 0) {
+      errors.push(`stage "${s.id}": at least one general symptom is required`);
+    }
+  }
+
   // THI-116: the copy is user-agnostic — a consultant may be assessing a client,
   // or the client may be self-assessing. First/second person silently assumes
   // one of those. Caught at build time so the voice cannot quietly regress.
   const VOICE_RE = /\b(we|us|our|ours|your|yours|you)\b/i;
   const voiceCheck: Array<[string, string]> = [
-    ...(data.stages ?? []).flatMap(
-      (s) =>
-        [
-          [`stage "${s.id}" text`, s.text],
-          ...(s.holding ? [[`stage "${s.id}" holding`, s.holding] as [string, string]] : []),
-        ] as Array<[string, string]>,
-    ),
+    ...(data.stages ?? []).flatMap((s) => {
+      const out: Array<[string, string]> = s.symptoms.map(
+        (t, i) => [`stage "${s.id}" general symptom ${i + 1}`, t] as [string, string],
+      );
+      if (s.holding) out.push([`stage "${s.id}" holding`, s.holding]);
+      return out;
+    }),
     ...(data.absent_answer?.text ? [["absent_answer", data.absent_answer.text] as [string, string]] : []),
     ...data.modules.flatMap((m) => {
       const out: Array<[string, string]> = [];
       if (m.kind === "binary" && m.question) out.push([`module "${m.id}" question`, m.question]);
-      if (m.kind === "staged" && m.requester) out.push([`module "${m.id}" requester`, m.requester]);
+      if (m.kind === "staged") {
+        if (m.requester) out.push([`module "${m.id}" requester`, m.requester]);
+        for (const [sid, ms] of Object.entries(m.stages ?? {})) {
+          if (ms?.defining) out.push([`module "${m.id}" stage "${sid}" defining`, ms.defining]);
+          (ms?.symptoms ?? []).forEach((t, i) =>
+            out.push([`module "${m.id}" stage "${sid}" symptom ${i + 1}`, t]),
+          );
+        }
+      }
       return out;
     }),
   ];
@@ -258,8 +334,27 @@ export function validateModules(data: ModuleData): ModuleData {
     }
   }
 
-  // Every staged Module resolves {requester}; an unfilled placeholder would
-  // otherwise ship to the page verbatim.
+  // Per-Module copy exists to make each department read differently. Identical
+  // defining sentences across Modules mean the authoring silently regressed to
+  // the generic wording this schema replaced.
+  for (const s of data.stages ?? []) {
+    const seen = new Map<string, string[]>();
+    for (const m of data.modules) {
+      if (m.kind !== "staged") continue;
+      const d = m.stages?.[s.id]?.defining?.trim().toLowerCase();
+      if (!d) continue;
+      seen.set(d, [...(seen.get(d) ?? []), m.id]);
+    }
+    for (const [text, ids] of seen) {
+      if (ids.length > 1) {
+        errors.push(
+          `stage "${s.id}": modules ${ids.join(", ")} share the same defining sentence ` +
+            `("${text.slice(0, 40)}…") — per-module copy must actually differ`,
+        );
+      }
+    }
+  }
+
   for (const m of data.modules) {
     if (m.kind === "staged" && !requesterFor(m)) {
       errors.push(`module "${m.id}": staged modules must resolve a requester`);

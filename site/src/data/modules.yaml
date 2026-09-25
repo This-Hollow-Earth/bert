@@ -5,8 +5,8 @@
 # at build, so adding or rewording a Module is a content edit, not a code change.
 #
 # Fixed list — every respondent answers every Module. There is no skip: staged
-# Modules carry an explicit "we don't have this function" answer so absence is
-# captured as data rather than as a blank (feeds the deferred org-wide
+# Modules carry an explicit "this function doesn't exist here" answer so absence
+# is captured as data rather than as a blank (feeds the deferred org-wide
 # enterprise-readiness axis, THI-15).
 #
 # ids are STABLE FOREVER and never reused. A future Module split creates new
@@ -19,13 +19,27 @@
 #            OUTSIDE the consultancy-to-SaaS tension; they are presence-signals
 #            of a mature organisation, which is why they are not staged.
 #
-# NOTE: the five stage option texts below are THI-11's wording, carried over
-# verbatim and NOT yet neutral-voiced. They are written in the client's voice
-# ("your team is still configuring things manually"), but the v1 site is
-# user-agnostic — it cannot know whether a consultant or the client is
-# answering. The neutral-voice pass is outstanding work on THI-12.
+# SCHEMA v2 — per-Module stage copy.
+# v1 shared five generic paragraphs across every Module, so every department
+# read identically: neither sticky nor engaging, and too long to scan. This
+# reverses THI-11's "generic for v1, per-Module authoring is a v2 upgrade".
+#
+# Each staged Module now authors all five stages as:
+#   defining — ONE sentence naming the stage for THIS Module
+#   symptoms — up to 3 concrete, Module-specific observations
+#
+# Stage-level `symptoms` are appended to those: they hold at that stage in ANY
+# Module, so they keep the five options comparable across departments.
+#
+# VOICE (THI-116): third person about "the team" and "the organisation", never
+# we/us/our/your/you. The site is user-agnostic — a consultant may be assessing
+# a client, the client may be self-assessing, or both may read one screen
+# together. Enforced at build time; see validateModules().
+#
+# Standing cost, accepted deliberately: content maintenance is now 35 authored
+# entries rather than 5 paragraphs. That is the price of concreteness.
 
-schema_version: 1
+schema_version: 2
 
 groups:
   - id: commercial
@@ -37,67 +51,35 @@ groups:
   - id: corporate
     name: Corporate
 
-# Cons2SaaS stages. Shared across every staged Module in v1 (generic wording;
-# per-Module authored wording is a v2 upgrade, see THI-11).
-#
-# VOICE (THI-116): written in the third person about "the team" and "the
-# organisation", never "we"/"us"/"your team". The site is user-agnostic — a
-# consultant may be assessing a client, the client may be self-assessing, or
-# both may be reading one screen together. Any first- or second-person phrasing
-# silently assumes one of those and reads wrong for the others.
-#
-# `{requester}` is substituted per Module at render time (see `requester` on
-# each Module below; defaults to "clients"). It always appears in a position
-# where a plural noun phrase reads naturally.
+# The five Cons2SaaS stages.
+# `symptoms` here are GENERAL — they hold at this stage regardless of Module,
+# and render after the Module's own symptoms, visually secondary.
 stages:
   - id: A
     stage: 1
     name: Consultancy
-    text: >-
-      Every request starts from scratch. Each time {requester} need something
-      here, it is handled individually, from the ground up. The work depends
-      heavily on whichever senior person picks it up. How long a request takes,
-      and what it costs, is hard to predict. The same kind of request comes back
-      every few months and is solved fresh each time, with nothing carried over
-      from the last one.
+    symptoms:
+      - Cost and turnaround are hard to predict before work starts
   - id: B
     stage: 2
     name: Automated Consultancy
-    text: >-
-      Internal tools exist, but a person still runs them. The same requests kept
-      coming back, so the team built scripts, templates or internal tools that
-      make handling them faster. Someone still has to run those tools by hand for
-      every request. {requester} are starting to ask whether they could use the
-      tool directly, or subscribe to it, instead of asking a person to run it for
-      them.
+    symptoms:
+      - The same requests keep coming back
   - id: C
     stage: 3
     name: Hybrid
-    text: >-
-      It looks self-serve, but someone is still behind the curtain. On the
-      surface {requester} can help themselves. In practice the team still
-      configures things manually for every request and patches exceptions on the
-      fly. Getting set up takes weeks, not minutes. Feedback gets stuck between
-      "is this a bug" and "is this a missing feature", with no clear owner. Each
-      additional requester adds real work for the team, not just a checkbox.
+    symptoms:
+      - Feedback stalls between "bug" and "missing feature", with no clear owner
   - id: D
     stage: 4
     name: Big Head SaaS
-    text: >-
-      Mostly self-serve, but the biggest requests still need people. Most of
-      {requester} get what they need without help, and the cost and turnaround
-      are reasonably predictable. The largest, highest-stakes requests still need
-      hand-holding, onboarding support, or a dedicated point of contact. Every
-      one-off exception granted here risks dragging things back toward the
-      previous stage.
+    symptoms:
+      - Every one-off exception risks dragging things back a stage
   - id: E
     stage: 5
     name: Long Tail SaaS
-    text: >-
-      Self-serve, at near-zero effort from the team. Someone new among
-      {requester} can get what they need without ever talking to anyone. The cost
-      of serving one more is close to zero. The team's time goes toward handling
-      volume, not handling complexity or exceptions.
+    symptoms:
+      - The cost of serving one more is close to zero
     # Stage 5 has no next rung. THI-74: say what HOLDING it requires rather than
     # inventing a stage 6. Used by the results page instead of next-stage text.
     holding: >-
@@ -116,9 +98,8 @@ absent_answer:
 # Order is narrative, not ranked: it starts where every firm recognises itself
 # (Service Delivery) and ends with the two binary org-maturity signals.
 #
-# `requester` names who asks this Module for things; it is substituted into
-# `{requester}` in the stage text above. It defaults to "clients" and is only
-# written where it differs. THI-116: values are plural noun phrases with no
+# `requester` names who asks this Module for things. It defaults to "clients"
+# and is only written where it differs. Values are plural noun phrases with no
 # possessive ("the delivery and commercial teams", not "your delivery teams"),
 # so they read the same whether a consultant or the client is answering.
 modules:
@@ -128,6 +109,36 @@ modules:
     group: delivery
     office: front
     kind: staged
+    stages:
+      A:
+        defining: Every engagement is scoped and staffed from a blank page.
+        symptoms:
+          - A senior person has to read the brief before anyone can estimate it
+          - Two similar clients get two different delivery approaches
+          - Nothing from the last engagement shortens the next one
+      B:
+        defining: The team has templates and tooling, but a consultant still drives every engagement.
+        symptoms:
+          - Standard deliverables start from a template, not a blank page
+          - Someone runs the analysis by hand for each client
+          - Clients have started asking whether they could run it themselves
+      C:
+        defining: Clients get a portal, but delivery still happens behind it.
+        symptoms:
+          - Onboarding a new client takes weeks of configuration
+          - Exceptions are patched per client and never reach the product
+          - Each new client adds delivery hours, not just a login
+      D:
+        defining: Most clients serve themselves; the largest accounts still get hands-on delivery.
+        symptoms:
+          - Standard engagements complete without a consultant touching them
+          - Enterprise accounts still have a named delivery lead
+          - Bespoke commitments in big contracts pull work back to the team
+      E:
+        defining: Clients reach the outcome without the team in the loop.
+        symptoms:
+          - A new client can complete an engagement unaided
+          - The team's work scales with volume, not with client count
 
   - id: onboarding-support
     name: Onboarding & Support
@@ -135,6 +146,36 @@ modules:
     group: delivery
     office: front
     kind: staged
+    stages:
+      A:
+        defining: Every new client is onboarded by hand, however their lead prefers.
+        symptoms:
+          - Getting a client started depends on who picks up the phone
+          - Support answers are written fresh each time the same question arrives
+          - No two clients' onboarding look alike
+      B:
+        defining: A documented onboarding path exists, but a person walks every client down it.
+        symptoms:
+          - A checklist or welcome pack is reused across clients
+          - Someone schedules and runs each kickoff personally
+          - Common questions have canned answers, pasted by hand
+      C:
+        defining: Clients are pointed at self-serve material, but still need a person to finish.
+        symptoms:
+          - Help articles exist but stop short of the actual setup
+          - Support escalates to delivery for anything beyond the basics
+          - The same documentation gap is explained over and over in tickets
+      D:
+        defining: Most clients onboard themselves; the big ones still get a guided start.
+        symptoms:
+          - Standard accounts reach first value without a scheduled call
+          - Large accounts get a named onboarding contact
+          - Support volume no longer tracks the number of new clients
+      E:
+        defining: Clients onboard and unblock themselves.
+        symptoms:
+          - A new client reaches first value without contacting anyone
+          - Most questions are answered by the product, not by a person
 
   - id: product
     name: Product
@@ -143,6 +184,36 @@ modules:
     office: back
     kind: staged
     requester: the delivery and commercial teams
+    stages:
+      A:
+        defining: There is no product; there are client commitments.
+        symptoms:
+          - Roadmap items exist because one client asked for them
+          - Nobody can separate the product from what was built for one account
+          - Priorities change with whoever escalated most recently
+      B:
+        defining: A roadmap exists, but it is assembled by hand from whatever delivery escalates.
+        symptoms:
+          - Someone collates requests into a list each cycle
+          - Recurring asks are recognised, but only once raised again
+          - What ships is decided in a meeting, not against a stated direction
+      C:
+        defining: There is a product direction, but client exceptions keep overriding it.
+        symptoms:
+          - The roadmap is published internally and quietly ignored under pressure
+          - Features ship configured for one account and are never generalised
+          - Nobody owns saying no to a bespoke request
+      D:
+        defining: The roadmap drives most of what ships; the largest accounts still bend it.
+        symptoms:
+          - Standard releases follow the stated direction
+          - Enterprise deals still buy roadmap commitments
+          - Exceptions are tracked as debt rather than absorbed silently
+      E:
+        defining: The product direction holds regardless of who is asking.
+        symptoms:
+          - What ships is decided by evidence across many accounts, not one escalation
+          - Bespoke requests are declined or priced as configuration
 
   - id: engineering
     name: Engineering
@@ -151,6 +222,36 @@ modules:
     office: back
     kind: staged
     requester: the delivery teams and product
+    stages:
+      A:
+        defining: Engineering work is whatever the current engagement needs this week.
+        symptoms:
+          - Code is written against one client's situation
+          - There is no shared codebase worth reusing
+          - Whoever wrote it is the only one who can change it
+      B:
+        defining: Shared tooling exists, but shipping still needs the person who built it.
+        symptoms:
+          - Internal libraries and scripts are reused across engagements
+          - Deployment is a manual sequence someone remembers
+          - Work queues behind a small number of people
+      C:
+        defining: There is a real codebase, but every client needs a branch, a flag or a patch.
+        symptoms:
+          - Client-specific behaviour lives in conditionals nobody wants to touch
+          - Releases are coordinated per client rather than shipped once
+          - Fixing one account's bug risks breaking another's
+      D:
+        defining: One codebase serves everyone; the biggest accounts still get special handling.
+        symptoms:
+          - Releases go out once and reach all accounts
+          - Large accounts get dedicated environments or release windows
+          - Custom behaviour is contained in configuration, not in forks
+      E:
+        defining: One codebase, one release, no per-client engineering.
+        symptoms:
+          - Adding an account requires no engineering work at all
+          - Engineering time goes to capability, not to accommodation
 
   - id: methodology-data
     name: Methodology & Data
@@ -159,6 +260,36 @@ modules:
     office: back
     kind: staged
     requester: the analysts and delivery teams
+    stages:
+      A:
+        defining: Each analyst brings a personal method and a personal spreadsheet.
+        symptoms:
+          - The approach depends on who is doing the analysis
+          - Data is gathered from scratch for every engagement
+          - Two analysts reach different answers from the same inputs
+      B:
+        defining: A house method exists, but analysts apply it by hand.
+        symptoms:
+          - A documented framework or model is reused across clients
+          - Data is cleaned and loaded manually each time
+          - Results are reproducible only if the same person repeats the steps
+      C:
+        defining: The method is encoded in tooling, but analysts intervene in every run.
+        symptoms:
+          - The pipeline runs, then someone corrects the output
+          - Client data always needs mapping that was not anticipated
+          - Definitions drift between engagements without anyone noticing
+      D:
+        defining: The method runs itself for most clients; the complex ones need an analyst.
+        symptoms:
+          - Standard datasets flow through without intervention
+          - Unusual data shapes still route to a specialist
+          - Definitions are versioned and shared, not re-argued each time
+      E:
+        defining: The method and the data pipeline run without an analyst in the loop.
+        symptoms:
+          - New data sources are onboarded by configuration
+          - Analysts improve the method instead of running it
 
   - id: sales-marketing
     name: Sales & Marketing
@@ -166,6 +297,36 @@ modules:
     group: commercial
     office: front
     kind: staged
+    stages:
+      A:
+        defining: Every deal is won by a person telling the story in a room.
+        symptoms:
+          - Proposals are written from scratch for each prospect
+          - What the firm sells is explained differently by each person selling it
+          - Pipeline depends on individual relationships
+      B:
+        defining: Collateral and a pitch exist, but a person delivers every one.
+        symptoms:
+          - Decks, case studies and proposal templates are reused
+          - Outbound is sent manually, list by list
+          - Prospects cannot find out what it costs without a conversation
+      C:
+        defining: Prospects can research themselves, but every deal still needs a seller.
+        symptoms:
+          - The site explains the offer while pricing stays behind a contact form
+          - Inbound leads are qualified by hand before anything happens
+          - Marketing generates interest that sales has to translate
+      D:
+        defining: Most deals close without a conversation; the large ones are still sold.
+        symptoms:
+          - Self-serve signup exists and works for standard accounts
+          - Enterprise deals go through a named seller and a negotiation
+          - Pricing is public for everything below the enterprise tier
+      E:
+        defining: The offer sells itself at every size.
+        symptoms:
+          - A prospect can evaluate, buy and start without talking to anyone
+          - Sales effort goes to expansion rather than first purchase
 
   - id: finance-contracting
     name: Finance & Contracting
@@ -174,6 +335,36 @@ modules:
     office: back
     kind: staged
     requester: the commercial and delivery teams
+    stages:
+      A:
+        defining: Every contract and invoice is assembled by hand.
+        symptoms:
+          - Contracts are drafted per deal from the last similar one
+          - Invoicing depends on someone reconstructing what was delivered
+          - Revenue cannot be forecast beyond the current engagement
+      B:
+        defining: Templates and a billing process exist, but a person runs them.
+        symptoms:
+          - A master agreement and rate card are reused
+          - Invoices are generated on a schedule someone executes
+          - Finance can report on the past but not predict the next quarter
+      C:
+        defining: Billing is systematised, but non-standard terms keep breaking it.
+        symptoms:
+          - Most accounts bill automatically while several are handled off-system
+          - Bespoke payment terms require manual tracking
+          - Revenue recognition needs interpretation contract by contract
+      D:
+        defining: Billing runs itself for most accounts; the largest have negotiated terms.
+        symptoms:
+          - Standard accounts are contracted and billed without intervention
+          - Enterprise agreements carry bespoke terms and manual oversight
+          - Forecasting is reliable for the base and uncertain at the top
+      E:
+        defining: Contracting and billing are part of the product.
+        symptoms:
+          - A new account is contracted and billed without finance involvement
+          - Revenue is predictable because terms are uniform
 
   # Binary Modules. THI-116: phrased as "Is there…" rather than "Do you have…",
   # so the question does not assume the respondent belongs to the organisation.

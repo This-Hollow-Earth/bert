@@ -12,7 +12,7 @@
  * any notion of a target stage. No Module "should" be anywhere.
  */
 import type { Module, Stage, ModuleData } from "./modules";
-import { stageTextFor } from "./modules";
+import { definingFor } from "./modules";
 import type { Answer, Assessment } from "./storage";
 
 /** What a single Module resolved to. Mutually exclusive by construction. */
@@ -127,10 +127,15 @@ export function spreadSentence(data: ModuleData, s: Spread | null): string | nul
   );
 }
 
-/** Per-Module context line: the next rung up, or what holding the top requires. */
+/**
+ * Per-Module context line: the next rung up, or what holding the top requires.
+ *
+ * Deliberately the next stage's DEFINING SENTENCE only, not its bullets — the
+ * results page is a map, not a re-read of the questionnaire.
+ */
 export function contextFor(p: Placement, m: Module): string | null {
   if (p.state !== "placed") return null;
-  if (p.next) return stageTextFor(p.next, m);
+  if (p.next) return definingFor(m, p.next);
   return p.holding;
 }
 
