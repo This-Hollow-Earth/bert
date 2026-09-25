@@ -3,9 +3,11 @@
   import { requesterFor, stageTextFor } from "./modules";
   import * as store from "./storage";
   import type { Assessment } from "./storage";
+  import Results from "./Results.svelte";
 
   let current: Assessment | null = $state(store.list()[0] ?? null);
   let newName = $state("");
+  let view: "questions" | "results" = $state("questions");
 
   const answered = $derived(current ? Object.keys(current.answers).length : 0);
   const total = modules.length;
@@ -72,6 +74,8 @@
       <input type="text" bind:value={newName} placeholder="Organisation or engagement" />
       <button onclick={start}>Start</button>
     </p>
+  {:else if view === "results"}
+    <Results assessment={current} onback={() => (view = "questions")} />
   {:else}
     <h2>Where does each part of the organisation sit?</h2>
     <p>
@@ -110,6 +114,16 @@
       </section>
     {/each}
 
+    <div class="results-cta">
+      <button onclick={() => (view = "results")}>See stage placement</button>
+      {#if answered < total}
+        <small>
+          {answered} of {total} assessed — a partial assessment still produces an
+          honest page.
+        </small>
+      {/if}
+    </div>
+
     <div class="placeholder">
       Deferred to v2: the full graded checklist across the three Principles —
       Tested, Documented, Automated.
@@ -134,5 +148,15 @@
   button.chosen {
     background: var(--ink);
     color: var(--paper);
+  }
+  .results-cta {
+    border-top: var(--dash);
+    padding: 18px 0;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .results-cta small {
+    color: var(--ink-soft);
   }
 </style>

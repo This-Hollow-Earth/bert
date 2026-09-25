@@ -86,12 +86,33 @@ export const REQUESTER_TOKEN = "{requester}";
 
 /**
  * Fills `{requester}` in a stage's text for a given Module.
+ *
+ * Requester values are lowercase noun phrases ("clients", "the delivery
+ * teams"), but the placeholder can land at a sentence start, so each
+ * occurrence is capitalised when it follows a sentence boundary — otherwise
+ * the copy reads "...for every request. clients are starting to ask".
  * Binary Modules have no requester and never render stage text.
  */
 export function stageTextFor(stage: Stage, m: Module): string {
   const who = requesterFor(m);
   if (who === null) return stage.text;
-  return stage.text.split(REQUESTER_TOKEN).join(who);
+
+  const capitalised = who.charAt(0).toUpperCase() + who.slice(1);
+  let out = "";
+  let rest = stage.text;
+  for (;;) {
+    const i = rest.indexOf(REQUESTER_TOKEN);
+    if (i === -1) {
+      out += rest;
+      break;
+    }
+    const before = out + rest.slice(0, i);
+    // sentence start = start of text, or after . ! ? followed by whitespace
+    const atSentenceStart = /(^|[.!?]["')\]]?\s+)$/.test(before);
+    out = before + (atSentenceStart ? capitalised : who);
+    rest = rest.slice(i + REQUESTER_TOKEN.length);
+  }
+  return out;
 }
 
 /** Front/back office is an independent axis, NOT derived from group: marketing
