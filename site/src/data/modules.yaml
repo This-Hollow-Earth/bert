@@ -39,65 +39,88 @@ groups:
 
 # Cons2SaaS stages. Shared across every staged Module in v1 (generic wording;
 # per-Module authored wording is a v2 upgrade, see THI-11).
+#
+# VOICE (THI-116): written in the third person about "the team" and "the
+# organisation", never "we"/"us"/"your team". The site is user-agnostic — a
+# consultant may be assessing a client, the client may be self-assessing, or
+# both may be reading one screen together. Any first- or second-person phrasing
+# silently assumes one of those and reads wrong for the others.
+#
+# `{requester}` is substituted per Module at render time (see `requester` on
+# each Module below; defaults to "clients"). It always appears in a position
+# where a plural noun phrase reads naturally.
 stages:
   - id: A
     stage: 1
     name: Consultancy
     text: >-
-      Every request starts from scratch. Every time someone needs something from
-      this Module, it's handled individually, from the ground up. The work
-      depends heavily on whichever senior person handles it. You can't easily
-      predict how long a request will take or how much it will cost. The same
-      kind of request comes up every few months, solved fresh each time, with
-      nothing carried over from the last one.
+      Every request starts from scratch. Each time {requester} need something
+      here, it is handled individually, from the ground up. The work depends
+      heavily on whichever senior person picks it up. How long a request takes,
+      and what it costs, is hard to predict. The same kind of request comes back
+      every few months and is solved fresh each time, with nothing carried over
+      from the last one.
   - id: B
     stage: 2
     name: Automated Consultancy
     text: >-
-      We've built internal tools, but a person still runs them. You've noticed
-      the same requests coming up again and again, so you've built scripts,
-      templates, or internal tools that make handling them faster. But someone
-      still has to run those tools by hand for every request. People are starting
-      to ask if they can just use the tool themselves, or subscribe to it
-      directly, instead of asking a person to run it for them.
+      Internal tools exist, but a person still runs them. The same requests kept
+      coming back, so the team built scripts, templates or internal tools that
+      make handling them faster. Someone still has to run those tools by hand for
+      every request. {requester} are starting to ask whether they could use the
+      tool directly, or subscribe to it, instead of asking a person to run it for
+      them.
   - id: C
     stage: 3
     name: Hybrid
     text: >-
-      People think they're self-serve, but someone's still behind the curtain. On
-      the surface it looks like people can help themselves. In reality, your team
-      is still configuring things manually for every request, patching exceptions
-      on the fly. Getting set up takes weeks, not minutes. Feedback from
-      different requesters gets stuck between "is this a bug" and "is this a
-      missing feature," with no clear owner. Every additional requester adds real
-      work for your team, not just a checkbox.
+      It looks self-serve, but someone is still behind the curtain. On the
+      surface {requester} can help themselves. In practice the team still
+      configures things manually for every request and patches exceptions on the
+      fly. Getting set up takes weeks, not minutes. Feedback gets stuck between
+      "is this a bug" and "is this a missing feature", with no clear owner. Each
+      additional requester adds real work for the team, not just a checkbox.
   - id: D
     stage: 4
     name: Big Head SaaS
     text: >-
-      People mostly serve themselves, but the biggest requests still need us.
-      Most people can get what they need from this Module without help; you can
-      reasonably predict how much this will cost and how long it will take. But
-      your largest, highest-stakes requests still need hand-holding, onboarding
-      support, or a dedicated point of contact. Every one-off exception you grant
-      here risks dragging things back toward the previous stage.
+      Mostly self-serve, but the biggest requests still need people. Most of
+      {requester} get what they need without help, and the cost and turnaround
+      are reasonably predictable. The largest, highest-stakes requests still need
+      hand-holding, onboarding support, or a dedicated point of contact. Every
+      one-off exception granted here risks dragging things back toward the
+      previous stage.
   - id: E
     stage: 5
     name: Long Tail SaaS
     text: >-
-      People serve themselves, at near-zero effort from us. Someone new can get
-      what they need from this Module without ever talking to your team. The cost
-      of serving one more person is close to zero. Your team's time goes toward
-      handling volume, not handling complexity or exceptions.
+      Self-serve, at near-zero effort from the team. Someone new among
+      {requester} can get what they need without ever talking to anyone. The cost
+      of serving one more is close to zero. The team's time goes toward handling
+      volume, not handling complexity or exceptions.
+    # Stage 5 has no next rung. THI-74: say what HOLDING it requires rather than
+    # inventing a stage 6. Used by the results page instead of next-stage text.
+    holding: >-
+      There is no next stage. Holding this one means keeping the cost of the next
+      request near zero as volume grows — every exception, bespoke arrangement or
+      manual step that creeps back in pulls this function toward the previous
+      stage.
 
 # Answer offered on every staged Module instead of allowing a skip.
+# Voice note (THI-116): "this function" rather than "we" — the respondent may be
+# assessing someone else's organisation.
 absent_answer:
   id: X
-  text: We don't have this function.
+  text: This function doesn't exist here.
 
 # Order is narrative, not ranked: it starts where every firm recognises itself
 # (Service Delivery) and ends with the two binary org-maturity signals.
-# `requester` defaults to the client and is only written where it differs.
+#
+# `requester` names who asks this Module for things; it is substituted into
+# `{requester}` in the stage text above. It defaults to "clients" and is only
+# written where it differs. THI-116: values are plural noun phrases with no
+# possessive ("the delivery and commercial teams", not "your delivery teams"),
+# so they read the same whether a consultant or the client is answering.
 modules:
   - id: service-delivery
     name: Service Delivery
@@ -119,7 +142,7 @@ modules:
     group: product-engineering
     office: back
     kind: staged
-    requester: your delivery and commercial teams
+    requester: the delivery and commercial teams
 
   - id: engineering
     name: Engineering
@@ -127,7 +150,7 @@ modules:
     group: product-engineering
     office: back
     kind: staged
-    requester: your delivery teams and product
+    requester: the delivery teams and product
 
   - id: methodology-data
     name: Methodology & Data
@@ -135,7 +158,7 @@ modules:
     group: product-engineering
     office: back
     kind: staged
-    requester: your analysts and delivery teams
+    requester: the analysts and delivery teams
 
   - id: sales-marketing
     name: Sales & Marketing
@@ -150,15 +173,17 @@ modules:
     group: corporate
     office: back
     kind: staged
-    requester: your commercial and delivery teams
+    requester: the commercial and delivery teams
 
+  # Binary Modules. THI-116: phrased as "Is there…" rather than "Do you have…",
+  # so the question does not assume the respondent belongs to the organisation.
   - id: legal-compliance
     name: Legal & Compliance
     order: 8
     group: corporate
     office: back
     kind: binary
-    question: Do you have a dedicated person or team for legal and compliance?
+    question: Is there a dedicated person or team for legal and compliance?
 
   - id: people-hr
     name: People & HR
@@ -166,4 +191,4 @@ modules:
     group: corporate
     office: back
     kind: binary
-    question: Do you have a dedicated person or team for people and HR?
+    question: Is there a dedicated person or team for people and HR?

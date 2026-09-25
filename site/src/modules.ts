@@ -25,7 +25,13 @@ export interface Stage {
   id: string; // A-E
   stage: 1 | 2 | 3 | 4 | 5;
   name: string;
+  /** May contain the `{requester}` placeholder, filled per Module at render. */
   text: string;
+  /**
+   * Only on the top stage, which has no next rung. THI-74: the results page
+   * says what HOLDING this stage requires rather than inventing a stage 6.
+   */
+  holding?: string;
 }
 
 interface ModuleBase {
@@ -64,11 +70,28 @@ export interface ModuleData {
   modules: Module[];
 }
 
-/** Requester used by staged Modules that don't override it. */
-export const DEFAULT_REQUESTER = "your clients";
+/**
+ * Requester used by staged Modules that don't override it.
+ * THI-116: no possessive — the site cannot know whether a consultant or the
+ * client is answering, so "clients" rather than "your clients".
+ */
+export const DEFAULT_REQUESTER = "clients";
 
 export function requesterFor(m: Module): string | null {
   return m.kind === "staged" ? (m.requester ?? DEFAULT_REQUESTER) : null;
+}
+
+/** Placeholder in stage text, replaced with the Module's requester. */
+export const REQUESTER_TOKEN = "{requester}";
+
+/**
+ * Fills `{requester}` in a stage's text for a given Module.
+ * Binary Modules have no requester and never render stage text.
+ */
+export function stageTextFor(stage: Stage, m: Module): string {
+  const who = requesterFor(m);
+  if (who === null) return stage.text;
+  return stage.text.split(REQUESTER_TOKEN).join(who);
 }
 
 /** Front/back office is an independent axis, NOT derived from group: marketing
@@ -168,6 +191,58 @@ export function validateModules(data: ModuleData): ModuleData {
   }
   if (!data.modules.some((m) => m.kind === "staged")) {
     errors.push("at least one staged module is required");
+  }
+
+  // THI-74: the top stage has no next rung, so it must carry `holding` text for
+  // the results page to use in place of a next-stage description.
+  const top = [...(data.stages ?? [])].sort((a, b) => b.stage - a.stage)[0];
+  if (top && !top.holding) {
+    errors.push(
+      `stage "${top.id}" is the top stage and must define "holding" — it has no next stage up`,
+    );
+  }
+  for (const s of data.stages ?? []) {
+    if (s.holding && top && s.stage !== top.stage) {
+      errors.push(`stage "${s.id}": only the top stage may define "holding"`);
+    }
+  }
+
+  // THI-116: the copy is user-agnostic — a consultant may be assessing a client,
+  // or the client may be self-assessing. First/second person silently assumes
+  // one of those. Caught at build time so the voice cannot quietly regress.
+  const VOICE_RE = /\b(we|us|our|ours|your|yours|you)\b/i;
+  const voiceCheck: Array<[string, string]> = [
+    ...(data.stages ?? []).flatMap(
+      (s) =>
+        [
+          [`stage "${s.id}" text`, s.text],
+          ...(s.holding ? [[`stage "${s.id}" holding`, s.holding] as [string, string]] : []),
+        ] as Array<[string, string]>,
+    ),
+    ...(data.absent_answer?.text ? [["absent_answer", data.absent_answer.text] as [string, string]] : []),
+    ...data.modules.flatMap((m) => {
+      const out: Array<[string, string]> = [];
+      if (m.kind === "binary" && m.question) out.push([`module "${m.id}" question`, m.question]);
+      if (m.kind === "staged" && m.requester) out.push([`module "${m.id}" requester`, m.requester]);
+      return out;
+    }),
+  ];
+  for (const [where, text] of voiceCheck) {
+    const hit = VOICE_RE.exec(text);
+    if (hit) {
+      errors.push(
+        `${where}: first/second person "${hit[0]}" — copy must read the same whether a ` +
+          `consultant or the client is answering (THI-116)`,
+      );
+    }
+  }
+
+  // Every staged Module resolves {requester}; an unfilled placeholder would
+  // otherwise ship to the page verbatim.
+  for (const m of data.modules) {
+    if (m.kind === "staged" && !requesterFor(m)) {
+      errors.push(`module "${m.id}": staged modules must resolve a requester`);
+    }
   }
 
   if (errors.length) {

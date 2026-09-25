@@ -1,6 +1,6 @@
 <script lang="ts">
   import { modules, stagedModules, groupName, data } from "./content";
-  import { requesterFor } from "./modules";
+  import { requesterFor, stageTextFor } from "./modules";
   import * as store from "./storage";
   import type { Assessment } from "./storage";
 
@@ -50,7 +50,7 @@
   <span class="logo" role="img" aria-label="This Hollow Earth cube logo"></span>
   <div class="title">
     <h1>BERT</h1>
-    <span class="tagline">Where each part of your organisation sits, and what's next.</span>
+    <span class="tagline">Where each part of an organisation sits, and what's next.</span>
   </div>
   <span class="assessment-meta">
     {#if current}
@@ -75,8 +75,9 @@
   {:else}
     <h2>Where does each part of the organisation sit?</h2>
     <p>
-      Pick the paragraph closest to how each part actually works today — not how you
-      wish it worked. {stagedModules.length} questions, plus {modules.length - stagedModules.length} quick ones at the end.
+      For each part, pick the paragraph closest to how it actually works today —
+      not how it is meant to work on paper. {stagedModules.length} questions, plus
+      {modules.length - stagedModules.length} quick ones at the end.
     </p>
 
     {#each modules as m (m.id)}
@@ -84,14 +85,14 @@
         <h3>{m.name} <span class="tag">{groupName(m.group)}</span> <span class="tag">{m.office}</span></h3>
 
         {#if m.kind === "staged"}
-          <p><small>Requests come from {requesterFor(m)}.</small></p>
+          <p><small>Requests here come from {requesterFor(m)}.</small></p>
           {#each data.stages as s (s.id)}
             <p>
               <button
                 class:chosen={isChosen(m.id, s.id)}
                 onclick={() => pickStage(m.id, s.id)}
               >{s.id}</button>
-              {s.text}
+              {stageTextFor(s, m)}
             </p>
           {/each}
           <p>
