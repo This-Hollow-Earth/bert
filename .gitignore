@@ -165,7 +165,8 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-#   (template rule `/site` removed: BERT's own static site lives in /site)
+#   (template rule `/site` removed: this repo's Vite app lives at the root,
+#    so a blanket /site ignore would be both stale and dangerous)
 
 # mypy
 .mypy_cache/
@@ -217,9 +218,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Node / the BERT static site (site/)
+# Node / the BERT static site (Vite app at the repo root)
 node_modules/
-site/dist/
+dist/
 *.tsbuildinfo
 npm-debug.log*
 .DS_Store
